@@ -41,24 +41,31 @@ def compute_student_averages(students):
             id, student in students.viewitems()]
 
 
+def print_student_averages(students):
+    # type: (list[Student]) -> None
+    # map(print, students)
+
+    # Printing, table format
+    # for student in students:
+    #     if len(student.name) < 7:
+    #         print(student.name, "\t\t|| ID: ", student.id, "\t|| Average: ", student.average)
+    #     else:
+    #         print(student.name, "\t|| ID: ", student.id, "\t|| Average: ", student.average)
+
+    # For tighter table formatting:
+    for student in students:
+        print("{0:11} || ID: {1:2} || Average: {2}".format(
+            student.name, student.id, student.average))
+
+
 def main():
     with Database('students.db', debug=True) as db:
         db.add_csv('students.csv', types=('TEXT', 'INT', 'INT PRIMARY KEY'))
         db.add_csv('courses.csv', types=('TEXT', 'INT', 'INT'))
 
         students = compute_student_averages(group_students(db))
-        #map(print, students)
-        """Printing, table format"""
-        for student in students:
-            if len(student.name) < 7:
-                print(student.name, "\t\t|| ID: ", student.id, "\t|| Average: ", student.average)
-            else:
-                print(student.name, "\t|| ID: ", student.id, "\t|| Average: ", student.average)
-        '''
-        For tighter table formatting:
-        for student in students:
-            print("{0:11} || ID: {1} || Average: {2}".format(student.name, student.id, student.average))    
-        '''
-                
+        print_student_averages(students)
+
+
 if __name__ == '__main__':
     main()
