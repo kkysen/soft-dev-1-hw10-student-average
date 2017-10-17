@@ -40,7 +40,6 @@ def compute_student_averages(students):
     return [Student(id, student.name, float(sum(student.average)) / len(student.average)) for
             id, student in students.viewitems()]
 
-
 def print_student_averages(students):
     # type: (list[Student]) -> None
     # map(print, students)
@@ -57,6 +56,18 @@ def print_student_averages(students):
         print("{0:11} || ID: {1:2} || Average: {2}".format(
             student.name, student.id, student.average))
 
+def create_peeps_avg(db, students):
+    db.cursor.execute("CREATE TABLE IF NOT EXISTS peeps_avg (name TEXT, id INTEGER, avg INTEGER)")
+    for student in students:
+        db.cursor.execute(
+            "INSERT INTO peeps_avg VALUES('" + student.name + "', " + str(student.id) + ", " + str(
+                student.average) + ")")
+
+    # Displays table peeps_avg
+    db.cursor.execute("SELECT*FROM peeps_avg;")
+    print("PEEPS_AVG\n")
+    for rows in db.cursor.fetchall():
+        print(rows)
 
 def main():
     with Database('students.db', debug=True) as db:
@@ -64,7 +75,10 @@ def main():
         db.add_csv('courses.csv', types=('TEXT', 'INT', 'INT'))
 
         students = compute_student_averages(group_students(db))
-        print_student_averages(students)
+        create_peeps_avg(db, students)
+        #print_student_averages(students)
+
+
 
 
 if __name__ == '__main__':
