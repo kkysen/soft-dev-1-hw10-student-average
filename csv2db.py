@@ -10,7 +10,7 @@ class Database(object):
     """Database wrapper."""
 
     def __init__(self, path, debug=False):
-        # type: (str) -> Database
+        # type: (str) -> None
         self.path = path
         self._db = sqlite3.connect(path)
         self.cursor = self._db.cursor()
@@ -21,25 +21,29 @@ class Database(object):
         # type: (str) -> str
         return '"{}"'.format(s.replace("'", "''").replace('"', '""'))
 
+    @staticmethod
+    def desanitize(s):
+        # type: (str) -> str
+        return s.replace("''", "'").replace('""', '"').strip('"')
+
     def table_exists(self, table_name):
         # type: (str) -> bool
         query = 'SELECT COUNT(*) FROM sqlite_master WHERE type="table" AND name=?'
-        return self.cursor.execute(query, [table_name]).fetchone()[0] > 0
+        return self.cursor.execute(query, [Database.desanitize(table_name)]).fetchone()[0] > 0
 
     def add_csv(self, path, table_name=None, types=None):
-        # type: (str, Iterable[str] | None) -> bool
+        # type: (str, Iterable[str] | None) -> str | None
         file_name = os.path.basename(path)
         if '.' in file_name:
             file_name, ext = file_name.rsplit('.', 1)
             if ext != 'csv':
-                return False
+                return None
         if table_name is None:
             table_name = file_name
+        table_name = Database.sanitize(table_name)
 
         if self.table_exists(table_name):
-            return False
-
-        table_name = Database.sanitize(table_name)
+            return table_name
 
         with open(path) as csv_file:
             fields = csv.DictReader(csv_file).fieldnames
@@ -60,22 +64,27 @@ class Database(object):
                 ', '.join('?' for i in xrange(num_fields))
             )
             self.cursor.executemany(insert_query, [row for row in reader])
-        return True
+        return table_name
 
     def commit(self):
+        # type: () -> None
         self._db.commit()
 
     def hard_close(self):
+        # type: () -> None
         self._db.close()
 
     def close(self):
+        # type: () -> None
         self.commit()
         self.hard_close()
 
     def __enter__(self):
+        # type: () -> Database
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        # type: () -> None
         self.close()
 
 
